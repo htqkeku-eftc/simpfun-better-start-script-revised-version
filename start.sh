@@ -1,89 +1,108 @@
 #!/bin/bash
+
+#--------预加载区--------
+
 # 检查当前 Shell 是否是 Bash
 if [ "$BASH_VERSION"x = ""x ]; then
   echo "当前 Shell 不是 Bash。正在使用 Bash 重新运行脚本..."
   sleep 1
   exec bash "$0" "$@"
 fi
+# 用户须知
+show_start_message_and_exit=1
+if [ "$show_start_message_and_exit"x = "1"x ]
+then
+	echo "欢迎使用 更好的简幻欢启动脚本 ，作者 wujinjun-MC (https://github.com/wujinjun-MC)"
+	echo "在开始使用前，请使用编辑器打开start.sh，在下方配置区中进行配置"
+	echo "免责声明: 使用此项目时，用户需自行检查脚本和配置是否正确，自行承担使用风险，不得将此项目用于违反简幻欢(Simpfun)用户条款、中华人名共和国及当地法律法规的行为。wujinjun-MC 不为使用者承担任何责任"
+	echo "请遵守开源协议，并保证不将此项目用于销售和其他违规用途。该项目不会对任何人收费。如果您通过任何渠道购买了此项目或其中的一部分，请要求退款"
+	echo "如不同意条款，请立即删除此脚本和其他附属文件。"
+	echo "如同意，请使用编辑器将show_start_message_and_exit设置为0，然后重新启动实例。"
+fi
 # 获取开始启动的时间戳
 start_timestamp=$(date +%s)
-
-
-#--------配置区--------
 # 文件权限准备: 为二进制文件和脚本文件添加执行权限(+x)
 chmod -R +x ~/bin/
 chmod -R +x ~/start-part-mcserver.sh
 
-# 服务器核心文件路径
-export server_jar="server-release.jar"
-# 服务器JVM的最大(-Xmx)和预占用(-Xms)内存, 建议最大设置为容器限制-1500, 预占用内存设置为最大的一半
-export maxmem=$((${SERVER_MEMORY} - 1500))
-export minmem=$((${maxmem} / 2))
-# JVM参数 优化版 详情: https://g.co/gemini/share/def3167e45bc
+
+#--------配置区--------
+
+# 内存设置
+	## 服务器JVM的最大(-Xmx)和预占用(-Xms)内存, 建议最大设置为容器限制的80%, 预占用内存设置等于最大值，避免动态分配效率降低。如果使用的是OpenJDK而不是Zulu，则可以尝试增大百分比
+		### export maxmem=$(echo "$SERVER_MEMORY*80/100" | busybox bc)
+		### export minmem=$((${maxmem} / 2))
+	## (Deprecated)服务器JVM的最大(-Xmx)和预占用(-Xms)内存, 建议最大设置为容器限制-1500, 预占用内存设置为最大的一半
+		### export maxmem=$((${SERVER_MEMORY} - 1500))
+		### export minmem=$((${maxmem} / 2))
+export allocate_perfcent=80
+export maxmem=$(echo "$SERVER_MEMORY*$allocate_perfcent/100" | busybox bc)
+export minmem=$maxmem
+# Java设置
+	## 不要和内存设置调换顺序，因为JVM参数中包含了内存设置的变量
+	## JVM参数 优化版 详情: https://g.co/gemini/share/def3167e45bc
 export jvm="-server -Xms${minmem}M -Xmx${maxmem}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true"
-
-# SSH(远程终端)模式
-# 设置为0使用Tmate, 在控制台输出访问ssh命令和web链接, 用于访问容器Shell和MC服务器控制台Shell
-# 设置为1使用Handy-sshd, 需要一个独立端口用于sshd, MC控制台在tmux中, 登录ssh后执行 "tmux attach" 进入控制台
+# SSH设置
+	## SSH(远程终端)模式
+		### 设置为0使用Tmate, 在控制台输出访问ssh命令和web链接, 用于访问容器Shell和MC服务器控制台Shell
+		### 设置为1使用Handy-sshd, 需要一个独立端口用于sshd, MC控制台在tmux中, 登录ssh后执行 "tmux attach" 进入控制台
 sshmode=1
-# # SSH模式为1时，是否开启 用户名和密码登录
-# ssh_use_user_password=1
-# # SSH模式为1时，是否开启 密钥登录
-# ssh_use_key=1
-
-# Tmate模式: 创建Shell重试次数
-retry=5
-
-# sshd使用的端口
+	## SSH模式为1时，是否开启 用户名和密码登录
+		### ssh_use_user_password=1
+	## SSH模式为1时，是否开启 密钥登录
+		### ssh_use_key=1
+	## Tmate模式下创建Shell重试次数
+tmate_retry=5
+	## sshd使用的端口
 sshd_port=25495
-
-# SSH认证信息。如果 {用户名和密码} 或 {密钥} 组成部分都为空白，则不使用对应认证方法
-# SSH用户名(不要带":"和"@", 或使用反斜杠转义)
+	## SSH认证信息。如果 {用户名和密码} 或 {密钥} 组成部分都为空白，则不使用对应认证方法
+		### SSH用户名(不要带":"和"@", 或使用反斜杠转义)
 ssh_username=wujinjun
-# SSH密码(不要带":", 或使用反斜杠转义) 留空则无需密码即可登录(非常不安全!)
+		### SSH密码(不要带":", 或使用反斜杠转义) 留空则无需密码即可登录(非常不安全!)
 ssh_password=mypassword
-# SSH密钥(authorized_keys)路径
+		### SSH密钥(authorized_keys)路径
 ssh_key_path=~/.ssh/authorized_keys
-
-# 指定tmate二进制文件的路径
+# 文件设置
+	## 指定服务器核心文件路径
+export server_jar="server-release.jar"
+	## 指定tmate二进制文件的路径
 tmate=~/bin/tmate
-# 指定tmux二进制文件的路径
+	## 指定tmux二进制文件的路径
 tmux=~/bin/tmux
-
-# 指定关服标志文件, 用于判断是否停止服务器
+	## 指定关服标志文件, 用于判断是否停止服务器
 export fileCheckIfShutdownFromConsole=~/shutdown-mc-server
-# 添加本地bin目录到路径
+	## 添加本地bin目录到路径
 export PATH=$PATH:$HOME/bin
-# 显示环境变量
-# env
-# 显示系统信息
-# uname -a
-
-# 关服时，是否清除垃圾，避免因超出磁盘空间而扣积分(默认关闭)
-	# 清除BlueMap地图缓存
+	## 显示环境变量
+		### env
+	## 显示系统信息
+		### uname -a
+	## 关服时，是否清除垃圾，避免因超出磁盘空间而扣积分(默认关闭)
+		### 清除BlueMap地图缓存
 cleanBlueMap=0
-	# 清除DHSupport压缩区块缓存
+		### 清除DHSupport压缩区块缓存
 cleanDistantHorizonsSupport=0
-	# 清除paper重映射插件缓存
+		### 清除paper重映射插件缓存
 cleanPaperRemappedPlugins=0
-# 脚本结束动作，收到SIGINT结束时执行清理
+# 结束动作设置
+	## 脚本结束动作，收到SIGINT结束时执行清理
 exit_actions()
 {
 	echo
 	echo "Minecraft server stopped, exiting..."
-	# 清除BlueMap地图缓存
+	## 清除BlueMap地图缓存
 	if [ "$cleanBlueMap"x = "1"x ]
 	then
 		echo "正在清除BlueMap地图缓存"
 		rm -rf ~/bluemap/web/maps/*
 	fi
-	# 清除DHSupport压缩区块缓存
+	## 清除DHSupport压缩区块缓存
 	if [ "$cleanDistantHorizonsSupport"x = "1"x ]
 	then
 		echo "正在清除DHSupport压缩区块缓存"
 		rm -f ~/plugins/DHSupport/data.sqlite
 	fi
-	# 清除paper重映射插件缓存
+	## 清除paper重映射插件缓存
 	if [ "$cleanPaperRemappedPlugins"x = "1"x ]
 	then
 		echo "正在清除paper重映射插件缓存"
@@ -108,7 +127,7 @@ then
 	"$tmate" -S "$tmate_sock_system" new-session -P -d
 	while ! "$tmate" -S "$tmate_sock_system" wait tmate-ready # 等待到Tmate连接建立。返回非0代表连接建立失败
 	do
-		if [ "$numTmateTrials" -ge "$retry" ]
+		if [ "$numTmateTrials" -ge "$tmate_retry" ]
 		then
 			echo "[Tmate]启动容器Shell失败, 已跳过"
 			fail1=1
@@ -136,7 +155,7 @@ then
 	"$tmate" -S "$tmate_sock_MCconsole" new-session -d bash start-part-mcserver.sh $$
 	while ! "$tmate" -S "$tmate_sock_MCconsole" wait tmate-ready # 等待到Tmate连接建立。返回非0代表连接建立失败
 	do
-		if [ "$numTmateTrials" -ge "$retry" ]
+		if [ "$numTmateTrials" -ge "$tmate_retry" ]
 		then
 			echo "[Tmate]启动服务器Shell失败, 已跳过"
 			fail2=1
