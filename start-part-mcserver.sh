@@ -33,6 +33,14 @@ do
 	then
 		break
 	fi
+	# 新增: 检查是否存在 自动任务-0点自动关服并等待 的标志文件
+    if [ -f "$fileCheckIfAutoTaskHour0AutoSleep" ]
+    then
+        echo -e "\n检测到定时维护(\"0点自动关服并等待\" 已触发)，服务器将在60分钟后自动重启..."
+        rm "$fileCheckIfAutoTaskHour0AutoSleep" # 删除标志文件
+        sleep 3600               # 睡眠 3600 秒 (60 分钟)
+        continue                 # 跳过用户交互，直接进入下一次循环重启服务器
+    fi
 	reset
 	echo -e "\n服务器已停止或崩溃，30秒后自动重启。输入 \"stop\" 立即停止；输入 \"jvm\" ，然后输入JVM参数，以使用自定义JVM参数重启；输入\"sleep\"，然后输入时间(秒，默认10000000)，则等待此时间后重启；输入 \"sleepstop\" ，然后输入时间(秒, 默认10000000)，则等待此时间后停止；输入\"pause\"，则持续停止，然后输入\"resume\"启动或输入\"stop\"停止；输入其他内容则立即重启"
 	read -t 30 REPLY

@@ -69,11 +69,13 @@ ssh_key_path=~/.ssh/authorized_keys
 	## 指定服务器核心文件路径
 export server_jar="server-release.jar"
 	## 指定tmate二进制文件的路径
-tmate=~/bin/tmate
+export tmate=~/bin/tmate
 	## 指定tmux二进制文件的路径
-tmux=~/bin/tmux
+export tmux=~/bin/tmux
 	## 指定关服标志文件, 用于判断是否停止服务器
 export fileCheckIfShutdownFromConsole=~/shutdown-mc-server
+	## 指定"自动休眠"标志文件，判断是否为 自动任务-0点自动关服并等待
+export fileCheckIfAutoTaskHour0AutoSleep=~/hour0-auto-sleep
 	## 添加本地bin目录到路径
 export PATH=$PATH:$HOME/bin
 	## 显示环境变量
@@ -87,6 +89,9 @@ cleanBlueMap=0
 cleanDistantHorizonsSupport=0
 		### 清除paper重映射插件缓存
 cleanPaperRemappedPlugins=0
+# 自动任务
+	## 是否启用 0点自动关服并等待 - 在0点时关闭服务器，等待一定时间(默认3600秒/60分钟)再开服，用于防止服务器损坏，因为如果积分不足，实例在此时会被强制停止。(暂时仅支持Handy-sshd模式)
+export enable_autotask_hour0_auto_sleep=1
 # 结束动作设置
 	## 脚本结束动作，收到SIGINT结束时执行清理
 exit_actions()
@@ -116,8 +121,9 @@ exit_actions()
 
 
 #--------启动区--------
-# 删除关服标志文件, 防止错误
+# 删除所有标志文件, 防止错误
 rm -f "$fileCheckIfShutdownFromConsole"
+rm -f "$fileCheckIfAutoTaskHour0AutoSleep"
 
 if [ "$sshmode"x = "0"x ]
 then
@@ -233,6 +239,28 @@ then
 	done
 elif [ "$sshmode"x = "1"x ]
 then
+    # 自动任务-0点自动关服并等待
+    if [ "$enable_autotask_hour0_auto_sleep"x = "1"x ]
+    then
+        echo "✅ [定时任务] \"0点自动关服并等待\" 已启用。"
+        (
+            while true
+            do
+                current_hour=$(date +%H)
+                current_minute=$(date +%M)
+
+                if [ "$current_hour"x = "00"x ] && [ "$current_minute"x = "00"x ]
+                then
+                    echo "检测到0点整，正在创建睡眠标志文件并发送停止命令，以保护服务器..."
+                    touch "$fileCheckIfAutoTaskHour0AutoSleep"
+                    "$tmux" send-keys -t mcserver_console "stop" Enter
+                fi
+                sleep 60
+            done
+        ) &
+    else
+        echo "❌ [定时任务] \"0点自动关服并等待\" 已禁用。"
+    fi
 	echo "[Tmux] 正在启动Handy-sshd"
 	# 构建handy-sshd命令行参数，自动检测是否需要添加参数
 		# 1. 初始化一个参数数组
