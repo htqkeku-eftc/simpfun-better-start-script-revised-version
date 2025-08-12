@@ -43,7 +43,7 @@ export minmem=$maxmem
 	## JVM参数 优化版 详情: https://g.co/gemini/share/def3167e45bc
 export jvm="-server -Xms${minmem}M -Xmx${maxmem}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true"
 	## 备用JVM参数，除了内存信息外什么都不添加，用于临时救急
-export jvm="-Xms${minmem}M -Xmx${maxmem}M"
+# export jvm="-Xms${minmem}M -Xmx${maxmem}M"
 # SSH设置
 	## SSH(远程终端)模式
 		### 设置为0使用Tmate, 在控制台输出访问ssh命令和web链接, 用于访问容器Shell和MC服务器控制台Shell
