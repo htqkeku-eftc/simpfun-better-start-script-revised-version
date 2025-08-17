@@ -42,7 +42,7 @@ export minmem=$maxmem
 	## 不要和内存设置调换顺序，因为JVM参数中包含了内存设置的变量
 	## JVM参数 优化版 详情: https://g.co/gemini/share/def3167e45bc
 		### + "-DIKnowThereAreNoNMSBindingsForv1_21_8ButIWillProceedAnyway" (用于1.21.8强制加载Terra(地形生成器)插件)
-export jvm="-server -Xms${minmem}M -Xmx${maxmem}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -DIKnowThereAreNoNMSBindingsForv1_21_8ButIWillProceedAnyway"
+export jvm="-server -Xms${minmem}M -Xmx${maxmem}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -DIKnowThereAreNoNMSBindingsForv1_21_8ButIWillProceedAnyway -Djava.security.manager=allow"
 	## 备用JVM参数，除了内存信息外什么都不添加，用于临时救急
 # export jvm="-Xms${minmem}M -Xmx${maxmem}M"
 # SSH设置
