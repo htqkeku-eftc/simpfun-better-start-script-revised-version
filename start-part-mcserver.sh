@@ -38,7 +38,8 @@ do
     then
         echo -e "\n检测到定时维护(\"0点自动关服并等待\" 已触发)，服务器将在60分钟后自动重启..."
         rm "$fileCheckIfAutoTaskHour0AutoSleep" # 删除标志文件
-        sleep 3600               # 睡眠 3600 秒 (60 分钟)
+        # sleep 3600               # 睡眠 3600 秒 (60 分钟)
+        read -t 3600 REPLY               # 睡眠 3600 秒 (60 分钟) (使用read实现允许跳过等待)
         continue                 # 跳过用户交互，直接进入下一次循环重启服务器
     fi
 	reset

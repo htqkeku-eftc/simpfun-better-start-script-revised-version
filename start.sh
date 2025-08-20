@@ -256,6 +256,9 @@ then
                     echo "检测到0点整，正在创建睡眠标志文件并发送停止命令，以保护服务器..."
                     touch "$fileCheckIfAutoTaskHour0AutoSleep"
                     "$tmux" send-keys -t mcserver_console "stop" Enter
+					# 360秒后也会自动移除睡眠标志文件，如果没有正确触发睡眠，手动stop时不会进入睡眠
+					sleep 360
+					rm "$fileCheckIfAutoTaskHour0AutoSleep"
                 fi
                 sleep 60
             done
