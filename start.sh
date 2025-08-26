@@ -18,6 +18,7 @@ then
 	echo "请遵守开源协议，并保证不将此项目用于销售和其他违规用途。该项目不会对任何人收费。如果您通过任何渠道购买了此项目或其中的一部分，请要求退款"
 	echo "如不同意条款，请立即删除此脚本和其他附属文件。"
 	echo "如同意，请使用编辑器将show_start_message_and_exit设置为0，然后重新启动实例。"
+	exit
 fi
 # 获取开始启动的时间戳
 export start_timestamp=$(date +%s)
