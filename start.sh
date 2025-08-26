@@ -9,7 +9,7 @@ if [ "$BASH_VERSION"x = ""x ]; then
   exec bash "$0" "$@"
 fi
 # 用户须知
-show_start_message_and_exit=1
+export show_start_message_and_exit=1
 if [ "$show_start_message_and_exit"x = "1"x ]
 then
 	echo "欢迎使用 更好的简幻欢启动脚本 ，作者 wujinjun-MC (https://github.com/wujinjun-MC)"
@@ -20,10 +20,11 @@ then
 	echo "如同意，请使用编辑器将show_start_message_and_exit设置为0，然后重新启动实例。"
 fi
 # 获取开始启动的时间戳
-start_timestamp=$(date +%s)
+export start_timestamp=$(date +%s)
 # 文件权限准备: 为二进制文件和脚本文件添加执行权限(+x)
 chmod -R +x ~/bin/
 chmod -R +x ~/start-part-mcserver.sh
+chmod -R +x ~/start-part-sshd.sh
 
 
 #--------配置区--------
@@ -51,22 +52,22 @@ export jvm="-server -Xms${minmem}M -Xmx${maxmem}M -XX:+UseG1GC -XX:+ParallelRefP
 	## SSH(远程终端)模式
 		### 设置为0使用Tmate, 在控制台输出访问ssh命令和web链接, 用于访问容器Shell和MC服务器控制台Shell
 		### 设置为1使用Handy-sshd, 需要一个独立端口用于sshd, MC控制台在tmux中, 登录ssh后执行 "tmux attach" 进入控制台
-sshmode=1
+export sshmode=1
 	## SSH模式为1时，是否开启 用户名和密码登录
 		### ssh_use_user_password=1
 	## SSH模式为1时，是否开启 密钥登录
 		### ssh_use_key=1
 	## Tmate模式下创建Shell重试次数
-tmate_retry=5
+export tmate_retry=5
 	## sshd使用的端口
-sshd_port=25495
+export sshd_port=25495
 	## SSH认证信息。如果 {用户名和密码} 或 {密钥} 组成部分都为空白，则不使用对应认证方法
 		### SSH用户名(不要带":"和"@", 或使用反斜杠转义)
-ssh_username=wujinjun
+export ssh_username=wujinjun
 		### SSH密码(不要带":", 或使用反斜杠转义) 留空则无需密码即可登录(非常不安全!)
-ssh_password=mypassword
+export ssh_password=mypassword
 		### SSH密钥(authorized_keys)路径
-ssh_key_path=~/.ssh/authorized_keys
+export ssh_key_path=~/.ssh/authorized_keys
 # 文件设置
 	## 指定服务器核心文件路径
 export server_jar="server-release.jar"
@@ -86,11 +87,11 @@ export PATH=$PATH:$HOME/bin
 		### uname -a
 	## 关服时，是否清除垃圾，避免因超出磁盘空间而扣积分(默认关闭)
 		### 清除BlueMap地图缓存
-cleanBlueMap=0
+export cleanBlueMap=0
 		### 清除DHSupport压缩区块缓存
-cleanDistantHorizonsSupport=0
+export cleanDistantHorizonsSupport=0
 		### 清除paper重映射插件缓存
-cleanPaperRemappedPlugins=0
+export cleanPaperRemappedPlugins=0
 # 自动任务
 	## 是否启用 0点自动关服并等待 - 在0点时关闭服务器，等待一定时间(默认3600秒/60分钟)再开服，用于防止服务器损坏，因为如果积分不足，实例在此时会被强制停止。(暂时仅支持Handy-sshd模式)
 export enable_autotask_hour0_auto_sleep=1
@@ -269,8 +270,8 @@ then
 	echo "[Tmux] 正在启动Handy-sshd"
 	# 构建handy-sshd命令行参数，自动检测是否需要添加参数
 		# 1. 初始化一个参数数组
-	sshd_args=("~/bin/handy-sshd")
-	sshd_args+=("-p" "$sshd_port")
+	export handy_sshd_command="~/bin/handy-sshd"
+	sshd_args=("-p" "$sshd_port")
 		# 2. 判断是否添加 --user 参数
 	if [[ -n "$ssh_username" && -n "$ssh_password" ]]; then
 		sshd_args+=("--user" "$ssh_username:$ssh_password")
@@ -281,9 +282,10 @@ then
 	fi
 		# 4. 构建最终在 tmux 中执行的命令
 		# 将参数数组中的元素拼接成一个字符串
-	handy_sshd_command="${sshd_args[@]}"
-	# echo "[Tmux] 执行命令: $handy_sshd_command" # 不安全
-	"$tmux" new-session -ds handy-sshd "$handy_sshd_command"
+	export handy_sshd_args="${sshd_args[@]}"
+	# echo "[Tmux] 执行命令: $handy_sshd_command $handy_sshd_args" # 不安全
+	"$tmux" new-session -ds handy-sshd "bash ~/start-part-sshd.sh | tee sshd-log.txt"
+	# "$tmux" new-session -ds handy-sshd "$handy_sshd_command $handy_sshd_args"
 	ssh_command="ssh -p $sshd_port"
 	if [[ -n "$ssh_username" ]]; then
 		ssh_command2="$ssh_username@play.simpfun.cn"
@@ -337,13 +339,6 @@ then
 	echo "⏳ 日志监控"
 	echo "---"
 	echo "正在监听 \"latest.log\" 文件，判断服务器何时启动成功..."
-	# echo -e "SSH端口为 $sshd_port 。使用以下ssh命令连接:\nssh -p $sshd_port $ssh_username@play.simpfun.cn\n连接后，使用以下命令进入MC服务器控制台:\ntmux attach -t mcserver_console"
-	# echo -e "如需访问容器内部端口，使用以下格式的ssh命令:\nssh -L <本地端口>:127.0.0.1:<远程端口> -p $sshd_port $ssh_username@play.simpfun.cn\nssh -L 9999:127.0.0.1:9999 -p $sshd_port $ssh_username@play.simpfun.cn\n然后访问 localhost:<本地端口>"
-	# echo "[Tmux]正在启动MC服务器..." 
-	# "$tmux" new-session -ds mcserver_console 'TERM=xterm-256color bash ~/start-part-mcserver.sh'" $$"' ; bash -l'
-	# echo "[Tmux]MC服务器状态: 正在启动, 端口为 $SERVER_PORT"
-	# echo "Note: 如果希望退出服务器启动脚本后保持运行，请先关闭服务器，在关闭还未重启时使用Linux命令\"pgrep -a bash\"查看启动脚本的PID，然后\"kill -s 9 <PID>\""
-	# echo "正在监听 latest.log 判断服务器何时启动成功"
 	trap exit_actions INT
 	tail -F ~/logs/latest.log | while IFS= read -r line
 	do
