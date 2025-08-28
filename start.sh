@@ -271,7 +271,7 @@ then
 	echo "[Tmux] 正在启动Handy-sshd"
 	# 构建handy-sshd命令行参数，自动检测是否需要添加参数
 		# 1. 初始化一个参数数组
-	export handy_sshd_command="~/bin/handy-sshd"
+	export handy_sshd_command=~/bin/handy-sshd
 	sshd_args=("-p" "$sshd_port")
 		# 2. 判断是否添加 --user 参数
 	if [[ -n "$ssh_username" && -n "$ssh_password" ]]; then
