@@ -224,7 +224,7 @@ then
 		read -p "> " REPLY
 		if [ "$REPLY"x = "stop"x ]
 		then
-			"$tmate" -S "$tmate_sock_MCconsole" send-keys "stop"
+			"$tmate" -S "$tmate_sock_MCconsole" send-keys "minecraft:stop"
 			"$tmate" -S "$tmate_sock_MCconsole" send-keys Enter
 			touch "$fileCheckIfShutdownFromConsole"
 			echo 正在停止服务器
@@ -267,7 +267,7 @@ then
                 then
                     echo "检测到0点整，正在创建睡眠标志文件并发送停止命令，以保护服务器..."
                     touch "$fileCheckIfAutoTaskHour0AutoSleep"
-                    "$tmux" send-keys -t mcserver_console "stop" Enter
+                    "$tmux" send-keys -t mcserver_console "minecraft:stop" Enter
 					# 360秒后也会自动移除睡眠标志文件，如果没有正确触发睡眠，手动stop时不会进入睡眠
 					sleep 360
 					rm "$fileCheckIfAutoTaskHour0AutoSleep"
@@ -370,7 +370,7 @@ then
 		then
 			echo 正在停止服务器
 			sleep 1
-			"$tmux" send-keys -t mcserver_console "stop"
+			"$tmux" send-keys -t mcserver_console "minecraft:stop"
 			"$tmux" send-keys -t mcserver_console Enter
 			touch "$fileCheckIfShutdownFromConsole"
 			"$tmux" attach -t mcserver_console
