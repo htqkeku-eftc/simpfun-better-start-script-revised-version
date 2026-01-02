@@ -74,9 +74,9 @@ export tmate_retry=5
 	## sshd使用的端口
 export sshd_port=25495
 	## SSH认证信息。如果 {用户名和密码} 或 {密钥} 组成部分都为空白，则不使用对应认证方法
-		### SSH用户名(不要带":"和"@", 或使用反斜杠转义)
+		### SSH用户名(尽量使用除了":"和"@"的ASCII可见字符)
 export ssh_username=wujinjun
-		### SSH密码(不要带":", 或使用反斜杠转义) 留空则无需密码即可登录(非常不安全!)
+		### SSH密码(尽量使用除了":"和"@"的ASCII可见字符) 留空则无需密码即可登录(非常不安全!)
 export ssh_password=mypassword
 		### SSH密钥(authorized_keys)路径
 export ssh_key_path=~/.ssh/authorized_keys
@@ -311,7 +311,7 @@ then
 	echo "$ssh_command $ssh_command2"
 	if [[ -n "$ssh_key_path" ]]; then
 		echo "💡 你已设置密钥连接，使用对应的密钥对将无需输入用户名和密码(如果有)"
-		echo "   命令示例: ssh -p $sshd_port -i /path/to/your/private_key play.simpfun.cn"
+		echo "   命令示例: ssh -p $sshd_port -i /path/to/your/private_key ${ssh_username}@play.simpfun.cn"
 	fi
 	echo "➡️ 连接后，使用以下命令进入控制台："
 	echo "tmux attach -t mcserver_console"
