@@ -4,9 +4,9 @@
 
 # 检查当前 Shell 是否是 Bash
 if [ "$BASH_VERSION"x = ""x ]; then
-  echo "当前 Shell 不是 Bash。正在使用 Bash 重新运行脚本..."
-  sleep 1
-  exec bash "$0" "$@"
+	echo "当前 Shell 不是 Bash。正在使用 Bash 重新运行脚本..."
+	sleep 1
+	exec bash "$0" "$@"
 fi
 # 用户须知
 export show_start_message_and_exit=1

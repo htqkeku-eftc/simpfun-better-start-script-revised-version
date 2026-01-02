@@ -17,53 +17,53 @@ HANDY_SSHD_ARGS=${handy_sshd_args:-"${@:3}"}
 # 函数：主重启循环
 # ==========================================================
 function main_loop() {
-    # 创建一个无限循环，确保进程总会被重启
-    while true; do
-        # 获取当前时间，格式化为 "YYYY-MM-DD HH:MM:SS"
-        TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-        echo "[$TIMESTAMP] 🚀 正在启动 $HANDY_SSHD_COMMAND，超时时间为 $HANDY_SSHD_TIMEOUT 秒..."
-        
-        # 使用 timeout 命令启动进程，并将其放入后台，这样我们就可以获取其 PID
-        timeout -s SIGINT $HANDY_SSHD_TIMEOUT $HANDY_SSHD_COMMAND $HANDY_SSHD_ARGS &
-        
-        # 获取由 timeout 启动的进程的 PID，这个 PID 是唯一的，不会被其他同名进程混淆
-        PID_TO_KILL=$!
-        
-        # 进入一个内部循环，每1秒检查一次文件和进程状态
-        while kill -0 $PID_TO_KILL 2>/dev/null; do
-            # 检查 "stop-sshd" 文件是否存在
-            if [[ -f "stop-sshd" ]]; then
-                TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-                echo "[$TIMESTAMP] 🚨 检测到 'stop-sshd' 文件。正在立即终止进程 $PID_TO_KILL..."
-                # 移除文件，防止下次循环再次触发
-                rm "stop-sshd"
-                # 直接杀死我们已知的进程 ID，而不是通过 pgrep
-                kill $PID_TO_KILL
-                # 退出内部循环，进入重启逻辑
-                break
-            fi
-            # 短暂休眠以避免 CPU 过高
-            sleep 1
-        done
+	# 创建一个无限循环，确保进程总会被重启
+	while true; do
+		# 获取当前时间，格式化为 "YYYY-MM-DD HH:MM:SS"
+		TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+		echo "[$TIMESTAMP] 🚀 正在启动 $HANDY_SSHD_COMMAND，超时时间为 $HANDY_SSHD_TIMEOUT 秒..."
 
-        # 等待进程退出，并获取其退出代码
-        wait $PID_TO_KILL
-        EXIT_CODE=$?
-        
-        # 根据进程的退出代码判断重启原因
-        TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-        if [[ $EXIT_CODE -eq 124 ]]; then
-            # 退出码 124 是 timeout 命令专用的，表示超时
-            echo "[$TIMESTAMP] ⏰ $HANDY_SSHD_COMMAND 运行超过 $HANDY_SSHD_TIMEOUT 秒后超时。正在重启..."
-        elif [[ $EXIT_CODE -eq 0 ]]; then
-            # 退出码 0 表示进程正常退出
-            echo "[$TIMESTAMP] ✅ $HANDY_SSHD_COMMAND 正常退出。正在重启..."
-        else
-            # 其他非零退出码表示异常退出
-            echo "[$TIMESTAMP] ⚠️ $HANDY_SSHD_COMMAND 异常退出，退出代码为 $EXIT_CODE。等待 $RESTART_DELAY 秒后重启..."
-            sleep $RESTART_DELAY
-        fi
-    done
+		# 使用 timeout 命令启动进程，并将其放入后台，这样我们就可以获取其 PID
+		timeout -s SIGINT $HANDY_SSHD_TIMEOUT $HANDY_SSHD_COMMAND $HANDY_SSHD_ARGS &
+
+		# 获取由 timeout 启动的进程的 PID，这个 PID 是唯一的，不会被其他同名进程混淆
+		PID_TO_KILL=$!
+
+		# 进入一个内部循环，每1秒检查一次文件和进程状态
+		while kill -0 $PID_TO_KILL 2>/dev/null; do
+			# 检查 "stop-sshd" 文件是否存在
+			if [[ -f "stop-sshd" ]]; then
+				TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+				echo "[$TIMESTAMP] 🚨 检测到 'stop-sshd' 文件。正在立即终止进程 $PID_TO_KILL..."
+				# 移除文件，防止下次循环再次触发
+				rm "stop-sshd"
+				# 直接杀死我们已知的进程 ID，而不是通过 pgrep
+				kill $PID_TO_KILL
+				# 退出内部循环，进入重启逻辑
+				break
+			fi
+			# 短暂休眠以避免 CPU 过高
+			sleep 1
+		done
+
+		# 等待进程退出，并获取其退出代码
+		wait $PID_TO_KILL
+		EXIT_CODE=$?
+		
+		# 根据进程的退出代码判断重启原因
+		TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
+		if [[ $EXIT_CODE -eq 124 ]]; then
+			# 退出码 124 是 timeout 命令专用的，表示超时
+			echo "[$TIMESTAMP] ⏰ $HANDY_SSHD_COMMAND 运行超过 $HANDY_SSHD_TIMEOUT 秒后超时。正在重启..."
+		elif [[ $EXIT_CODE -eq 0 ]]; then
+			# 退出码 0 表示进程正常退出
+			echo "[$TIMESTAMP] ✅ $HANDY_SSHD_COMMAND 正常退出。正在重启..."
+		else
+			# 其他非零退出码表示异常退出
+			echo "[$TIMESTAMP] ⚠️ $HANDY_SSHD_COMMAND 异常退出，退出代码为 $EXIT_CODE。等待 $RESTART_DELAY 秒后重启..."
+			sleep $RESTART_DELAY
+		fi
+	done
 }
 
 # ==========================================================

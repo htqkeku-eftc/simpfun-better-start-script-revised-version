@@ -19,8 +19,8 @@
 3. 给予 /bin/* start.sh start-part-mcserver.sh 执行权限(chmod -R 755 文件名)
 4. 在start.sh的配置区完成配置
 <!-- 5. 如果使用Dropbear模式，需要配置密钥。
-    1. 在自己的电脑上生成公私钥，然后创建/.ssh/文件夹，创建/.ssh/authorized_keys，将公钥添加到此文件
-    2. 使用非Dropbear模式连接容器的SSH -->
+	1. 在自己的电脑上生成公私钥，然后创建/.ssh/文件夹，创建/.ssh/authorized_keys，将公钥添加到此文件
+	2. 使用非Dropbear模式连接容器的SSH -->
 6. 启动服务器
 7. 运行成功后在Simpfun控制台输入help查看帮助
 
